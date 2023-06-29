@@ -1,0 +1,21 @@
+{
+    "name": "wexample/symfony-data-sync",
+    "description": "A data-sync service for Symfony",
+    "type": "library",
+    "license": "MIT",
+    "version": "0.1.0",
+    "autoload": {
+        "psr-4": {
+            "Wexample\\SymfonyDataSync\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "weeger",
+            "email": "romain.weeger@wexample.com"
+        }
+    ],
+    "require": {
+        "wexample/symfony-helpers": "^0.1.65"
+    }
+}
