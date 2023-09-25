@@ -2,16 +2,17 @@
 
 namespace Wexample\SymfonyDataSync\Service\DataSyncManager;
 
-use App\Message\EntitySyncMessage;
-use App\Wex\BaseBundle\Repository\AbstractRepository;
 use Doctrine\ORM\EntityManagerInterface;
+
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Wexample\SymfonyDataSync\Class\Map;
 use Wexample\SymfonyDataSync\Class\Relation;
+use Wexample\SymfonyDataSync\Message\EntitySyncMessage;
 use Wexample\SymfonyHelpers\Entity\Interfaces\AbstractEntityInterface;
 use Wexample\SymfonyHelpers\Helper\VariableHelper;
+use Wexample\SymfonyHelpers\Repository\AbstractRepository;
 use Wexample\SymfonyHelpers\Traits\EntityManipulatorTrait;
 
 abstract class EntitiesSyncManager
