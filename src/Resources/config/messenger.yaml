@@ -1,0 +1,5 @@
+symfony_data_sync:
+    messenger:
+        routing:
+            # Route your messages to the transports
+            'App\Message\EntitySyncMessage': async

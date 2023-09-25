@@ -15,5 +15,11 @@ class WexampleSymfonyDataSyncExtension extends AbstractWexampleSymfonyExtension
             __DIR__,
             $container
         );
+
+        $this->loadConfig(
+            __DIR__,
+            $container,
+            'messenger.yaml'
+        );
     }
 }
