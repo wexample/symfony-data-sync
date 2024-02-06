@@ -2,7 +2,7 @@
 
 namespace Wexample\SymfonyDataSync\Message;
 
-readonly class EntitySyncMessage
+class EntitySyncMessage
 {
     public function __construct(private array $data)
     {
