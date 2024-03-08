@@ -2,7 +2,7 @@
 
 namespace Wexample\SymfonyDataSync;
 
-use Wexample\SymfonyHelpers\AbstractBundle;
+use Wexample\SymfonyHelpers\Class\AbstractBundle;
 
 class WexampleSymfonyDataSyncBundle extends AbstractBundle
 {
