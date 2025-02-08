@@ -6,7 +6,7 @@ use JetBrains\PhpStorm\Pure;
 use Wexample\SymfonyDataSync\Service\DataSyncManager\EntitiesSyncManager;
 use Wexample\SymfonyDataSync\Service\DataSyncManager\RemoteSyncManager;
 use Wexample\SymfonyHelpers\Entity\Interfaces\AbstractEntityInterface;
-use Wexample\SymfonyHelpers\Helper\ClassHelper;
+use Wexample\Helpers\Helper\ClassHelper;
 
 class Map
 {
