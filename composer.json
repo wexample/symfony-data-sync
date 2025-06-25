@@ -3,7 +3,7 @@
     "description": "A data-sync service for Symfony",
     "type": "library",
     "license": "MIT",
-    "version": "1.0.54",
+    "version": "1.0.55",
     "autoload": {
         "psr-4": {
             "Wexample\\SymfonyDataSync\\": "src/"
@@ -16,6 +16,6 @@
         }
     ],
     "require": {
-        "wexample/symfony-helpers": "^1.0.60"
+        "wexample/symfony-helpers": "^1.0.61"
     }
 }
