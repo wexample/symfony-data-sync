@@ -3,10 +3,10 @@
 namespace Wexample\SymfonyDataSync\Class;
 
 use JetBrains\PhpStorm\Pure;
+use Wexample\Helpers\Helper\ClassHelper;
 use Wexample\SymfonyDataSync\Service\DataSyncManager\EntitiesSyncManager;
 use Wexample\SymfonyDataSync\Service\DataSyncManager\RemoteSyncManager;
 use Wexample\SymfonyHelpers\Entity\Interfaces\AbstractEntityInterface;
-use Wexample\Helpers\Helper\ClassHelper;
 
 class Map
 {
@@ -99,7 +99,7 @@ class Map
         $relationsFiltered = [];
 
         foreach ($this->relations as $relation) {
-            if (!$relation->allPartAreUpToDate()) {
+            if (! $relation->allPartAreUpToDate()) {
                 $relationsFiltered[] = $relation;
             }
         }

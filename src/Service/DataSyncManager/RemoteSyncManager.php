@@ -37,7 +37,7 @@ abstract class RemoteSyncManager
             // Search if an entry already exists.
             $relationPart = $map->getRelationPartForRemoteItem($this, $remoteItem);
 
-            if (!$relationPart) {
+            if (! $relationPart) {
                 // If manager is able to find an entity for this remote,
                 // reuse created relation to complete it.
                 if ($entity = $this->getEntityForRemote($remoteItem)) {
@@ -93,7 +93,7 @@ abstract class RemoteSyncManager
         /** @var AbstractEntityInterface $entity */
         $entity = $relation->getLocalPart()?->getObject();
 
-        if (!$entity) {
+        if (! $entity) {
             if ($this->isRemoteItemMightBeSync($remoteItem)) {
                 if (
                     EntitiesSyncManager::OPERATIONS_PART_LOCAL
@@ -114,7 +114,7 @@ abstract class RemoteSyncManager
         }
 
         // Entity exists, but expect to not.
-        if (!$this->isLocalEntityShouldBeSync($entity)) {
+        if (! $this->isLocalEntityShouldBeSync($entity)) {
             return EntitiesSyncManager::OPERATION_REMOTE_REMOVE;
         }
 
@@ -173,9 +173,9 @@ abstract class RemoteSyncManager
     ): string {
         $isRemoteExists = $this->hasRemoteItemForEntity($entity);
 
-        if (!$isRemoteExists) {
+        if (! $isRemoteExists) {
             // Remote does not exist, as expected.
-            if (!$this->isLocalEntityShouldBeSync($entity)) {
+            if (! $this->isLocalEntityShouldBeSync($entity)) {
                 return EntitiesSyncManager::OPERATION_UP_TO_DATE;
             }
 

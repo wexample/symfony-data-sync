@@ -3,7 +3,6 @@
 namespace Wexample\SymfonyDataSync\Service\DataSyncManager;
 
 use Doctrine\ORM\EntityManagerInterface;
-
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -130,7 +129,7 @@ abstract class EntitiesSyncManager
         $relation = new Relation();
         $localData = $relationData[VariableHelper::LOCAL];
 
-        if (!empty($localData)) {
+        if (! empty($localData)) {
             $operation = $localData[VariableHelper::OPERATION];
             $manager = $localData[VariableHelper::MANAGER] === static::class ?
                 $this : $this->remoteSyncManagers[$localData[VariableHelper::MANAGER]];
@@ -225,7 +224,7 @@ abstract class EntitiesSyncManager
                 $remoteSyncManager = $this->remoteSyncManagers[$remote];
                 $response = self::RESPONSE_TYPE_NOTHING_TO_DO;
 
-                if (!$hasLocalOperation || $localPart->getSyncManager() === $remoteSyncManager) {
+                if (! $hasLocalOperation || $localPart->getSyncManager() === $remoteSyncManager) {
                     $response = $remoteSyncManager->executeRemoteItemOperation(
                         $relationPart->getObject(),
                         $relationPart->getOperation(),
@@ -289,7 +288,7 @@ abstract class EntitiesSyncManager
             $map->applyFilterLocalEntity($singleEntity);
         }
 
-        if (!$all) {
+        if (! $all) {
             $map->setRelations(
                 $map->getNonUpToDateRelations()
             );
@@ -297,7 +296,7 @@ abstract class EntitiesSyncManager
 
         $relations = $map->getRelations();
 
-        if (!$dryRun) {
+        if (! $dryRun) {
             if ($async) {
                 foreach ($relations as $relation) {
                     if ($localPart = $relation->getLocalPart()) {
@@ -405,7 +404,7 @@ abstract class EntitiesSyncManager
                 }
 
                 // No custom placeholder has been set on remote item.
-                if (!$relation->getRemotePart($remoteSyncManager)) {
+                if (! $relation->getRemotePart($remoteSyncManager)) {
                     if ($remoteSyncManager->hasRemoteItemForEntity($entity)) {
                         $remoteItem = $remoteSyncManager->getRemoteItemForEntity($entity);
 
