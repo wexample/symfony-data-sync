@@ -1,6 +1,6 @@
 # wexample/symfony-data-sync
 
-Version: 1.0.77
+Version: 1.0.78
 
 A data-sync service for Symfony
 
@@ -129,7 +129,7 @@ Refer to each package's documentation for specific version compatibility require
 
 ## Dependencies
 
-- wexample/symfony-helpers: 1.0.84
+- wexample/symfony-helpers: 1.0.85
 
 
 # About us
