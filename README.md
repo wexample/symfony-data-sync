@@ -1,6 +1,6 @@
 # wexample/symfony-data-sync
 
-Version: 1.0.84
+Version: 1.0.85
 
 A data-sync service for Symfony
 
