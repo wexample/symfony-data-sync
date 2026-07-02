@@ -1,6 +1,6 @@
 # symfony_data_sync
 
-Version: 1.0.90
+Version: 1.0.91
 
 A data-sync service for Symfony
 
