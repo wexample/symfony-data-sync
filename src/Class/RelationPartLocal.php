@@ -2,6 +2,7 @@
 
 namespace Wexample\SymfonyDataSync\Class;
 
+use Symfony\Component\Uid\Uuid;
 use Wexample\SymfonyDataSync\Service\DataSyncManager\EntitiesSyncManager;
 
 class RelationPartLocal extends RelationPart
@@ -11,7 +12,7 @@ class RelationPartLocal extends RelationPart
         return EntitiesSyncManager::OPERATIONS_PART_LOCAL;
     }
 
-    public function getObjectId(): ?int
+    public function getObjectId(): ?Uuid
     {
         $object = $this->getObject();
 

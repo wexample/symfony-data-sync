@@ -4,6 +4,7 @@ namespace Wexample\SymfonyDataSync\Service\DataSyncManager;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Uid\Uuid;
 use Wexample\SymfonyDataSync\Class\Map;
 use Wexample\SymfonyDataSync\Class\Relation;
 use Wexample\SymfonyDataSync\Class\RelationItemPlaceHolder;
@@ -162,7 +163,7 @@ abstract class RemoteSyncManager
         return $repo->find($id);
     }
 
-    public function getLocalEntityId(AbstractEntityInterface $entity): int
+    public function getLocalEntityId(AbstractEntityInterface $entity): Uuid
     {
         return $entity->getId();
     }

@@ -115,7 +115,7 @@ class Map
             $object = $relation->getLocalPart()?->getObject();
 
             if (($object instanceof AbstractEntityInterface)
-                && $object->getId() === $entity->getId()) {
+                && $object->getId()->equals($entity->getId())) {
                 $relationsFiltered[] = $relation;
             }
         }
@@ -170,7 +170,7 @@ class Map
     ): ?RelationPart {
         foreach ($this->getRelations() as $relation) {
             if ($localPart = $relation->getLocalPart()) {
-                if ($localPart->getObject()->getId() === $entity->getId()) {
+                if ($localPart->getObject()->getId()->equals($entity->getId())) {
                     return $localPart;
                 }
             }
