@@ -1,6 +1,6 @@
 # symfony_data_sync
 
-Version: 1.0.94
+Version: 2.0.0
 
 `wexample/symfony-data-sync` is a Symfony bundle that keeps Doctrine entities in sync with one or more remote data sources by walking both sides, computing the required operation for each matched pair — `remote_create`, `local_update`, `remote_remove`, and so on — and executing or enqueuing it. Symfony developers extend `EntitiesSyncManager` to declare which entity class to manage and implement one `RemoteSyncManager` per external source to define how remote items are fetched, matched to local entities, and mutated; the library assembles a `Map` of `Relation` objects from both traversals and runs the resolved operations either synchronously or asynchronously via Symfony Messenger. It is aimed at application developers who need a structured, auditable way to mirror their Doctrine database state into external systems or pull remote records back into local entities.
 
@@ -117,7 +117,7 @@ Visit the [Wexample Suite documentation](https://docs.wexample.com) for the comp
 
 ## Dependencies
 
-- wexample/symfony-helpers: >=5.0.0
+- wexample/symfony-helpers: >=6.0.0
 
 ## Versioning & Compatibility Policy
 
