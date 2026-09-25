@@ -6,7 +6,7 @@ git:
 global:
   name: symfony_data_sync
   type: app
-  version: 2.0.5
+  version: 2.0.6
 wex:
   migration: 7
   version: 6.0.136
