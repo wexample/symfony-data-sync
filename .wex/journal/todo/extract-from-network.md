@@ -73,9 +73,10 @@ at most one extension suffix. Known extensions: `-ds` (screens on the design sys
 | `symfony-remote-ds` | Screens to manage remote connections. | `symfony-remote`, `symfony-design-system` |
 | `symfony-remote-rocket-chat` | `RocketChatClient extends AbstractApiClient`, its API repositories, and the User ↔ Rocket.Chat data-sync adapter (`fetchList()` / `fetch()` map onto `list()` / `get()`). Former proposal: `NETWORK/archeo/proposed-packages/symfony-rocket-chat/todo/extract-from-network.md`. | `symfony-remote`, `symfony-data-sync` |
 
-Renames pending on the owner's side: `symfony-ds-data-sync` → `symfony-data-sync-ds`,
+Renames done on 2026-09-27: `symfony-ds-data-sync` → `symfony-data-sync-ds`,
 `symfony-bridge-rocket-chat` → `symfony-remote-rocket-chat`, `symfony-stripe` →
-`symfony-remote-stripe`.
+`symfony-payment-stripe` (a payment provider on the Stripe SDK; it may use `symfony-remote`
+for credentials and health, but its parent is `payment`).
 
 Nothing Rocket.Chat-specific, and no `App\`, `User`, `Organization` or `SystemLog` reference,
 belongs in `symfony-data-sync`.
