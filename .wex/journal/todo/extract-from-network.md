@@ -1,138 +1,185 @@
 # Rebuild symfony-data-sync from network's sync engine
 
 Opened: 2026-09-24
-Updated: 2026-09-24
-Author: agent:archeology
+Updated: 2026-09-27
+Author: agent:archeology, revised with the owner on 2026-09-27
 
-## Read this first — status of this todo
+## Status
 
-> **This is a proposal for discussion, not an order to code.** It was written by the 2026-09 network archaeology pass. Read it, then discuss it with the owner: every design choice and recommendation below is to be challenged and validated **before** any code is written. Do not start implementing on your own.
->
-> - Context: `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/local/network/.wex/knowledge/readme/archeology/index.md.j2` (entry point, order between packages), then `sources.md.j2` (where the legacy code lives: archive repo, branch checkouts, GitLab issues) and the domain page linked below.
-> - Pending owner decisions affecting this work are listed in `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/local/network/.wex/knowledge/readme/archeology/recap.md.j2`, section "Décisions qui t'attendent". Where this todo assumes an answer, treat it as an open question.
-> - Safety: `NETWORK/local/network` runs on **production data** (real bookkeeping, real invoices in `var/`, a prod dump in `.wex/mysql/dumps/`) — read its code only, never run anything against it. Anonymize any fixture taken from network (bank exports, FEC, mails contain real names/accounts). Never copy secrets found in its history (Stripe keys, tokens, passwords, private keys).
+Written by the 2026-09 network archaeology pass, then discussed and validated with the owner
+on 2026-09-27. The decisions below are settled; the steps may start. Stop and report after
+step 1 (clean slate plus booting test kernel).
+
+Paths are relative to the PHP suite root (`PACKAGES/PHP/packages/wexample/`), except those
+starting with `NETWORK/`, which are relative to `WEXAMPLE/`.
+
+Read `symfony-tunnels/.wex/journal/todo/todo-common.md` first: it holds the conventions every
+extraction follows (layout, entities, tests, docs, way of working).
 
 ## Goal
 
-Turn `wexample/symfony-data-sync` into a generic, configurable engine that reconciles local Doctrine entities with external systems ("remotes"). It must provide declarative definitions per entity, pluggable remote adapters, an explicit link store, a matcher, a plan/diff report with dry-run, and synchronous or Messenger execution.
+Turn `symfony-data-sync` into a generic engine that reconciles local Doctrine entities with
+external data sources ("remotes"). It provides declarative definitions per entity, pluggable
+adapters, an explicit link store, a matcher, a plan/diff report with dry-run, and synchronous
+execution.
 
-The current `src/` (2.0.3) is a verbatim copy of network's 2022 engine. It does not load (wrong trait namespace) and it is coupled to network (`App\...` in the message handler). Keep the algorithm and the vocabulary, not the code.
+The current `src/` (2.0.x) is a verbatim copy of network's 2022 engine. It does not load
+(wrong trait namespace) and is coupled to network (`App\...` in the message handler). Keep the
+algorithm and the vocabulary, not the code.
 
-Rocket.Chat is the reference use case, but its adapter does **not** belong here. See `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/proposed-packages/symfony-rocket-chat/todo/extract-from-network.md`.
+## Decisions (validated 2026-09-27)
+
+- **Suite norms first.** Factorization and conventions of the whole stack prevail over this
+  todo: `wex ai::design/rules --formatter php-code`, the Rector rules shipped by `symfony-dev`,
+  and the mature packages (`symfony-helpers`, `symfony-loader`, `symfony-api`,
+  `symfony-design-system`, `symfony-forms`). Search the suite before writing any class
+  (`wex app::source/search --scope suite`). Report any divergence rather than following the
+  todo silently.
+- **Synchronous only in v1.** No Messenger, no queue, no message handler. Sync runs from the
+  console and, later, from the diff screen. An async mode (a queue fed from web pages) comes
+  back only when an app needs it; the legacy one was dead in prod anyway (no handler
+  registered).
+- **Link store.** Default: a `SyncLink` entity extending `AbstractEntity` (Uuid id), with the
+  local id stored as a string. Alternative: a `PropertyLinkStore` for apps that keep a column
+  on the entity (network's `User.rocketChatId`).
+- **Matching.** Ordered rule cascade: stored link, then exact normalized fields, then fuzzy.
+  Global and one-to-one: ambiguous cases become `Conflict` or `Candidate`, never an
+  auto-link. Fuzzy matching is new (the legacy engine had none); it is built **last**, on
+  top of a solid exact matcher.
+- **Default policies.** Excluded or disabled local: `ignore`. Orphan remote: `report`.
+  Unlinked local without match: `report`. No destructive operation and no implicit creation
+  unless configured. `RemoteRemove` is never a default.
+- **No dependency on `symfony-remote`.** The adapter contract belongs to data sync: a source
+  may be an API, a CSV, another database. A `symfony-remote-<service>` package plugs its
+  client into this contract.
+- **No dependency on `symfony-design-system`.** The engine stays light. The diff screen lives
+  in `symfony-data-sync-ds` (see "Package family").
+- **Test doubles** (`InMemoryRemoteAdapter`, `InMemoryLocalStore`) ship in `src/Testing/` so
+  bridges and apps can reuse them.
+
+## Package family
+
+Naming rule (suite-wide, decided 2026-09-27): `symfony-<parent>-<extension>`. A package that
+extends another starts with its parent's name, so each subject forms one block in a listing;
+at most one extension suffix. Known extensions: `-ds` (screens on the design system), `-demo`
+(demo pages), `-testing`, and `symfony-remote-<service>` for external services.
+
+| Package | Role | Depends on |
+|---|---|---|
+| `symfony-data-sync` | Engine: definitions, adapters contract, link store, matcher, planner, executor, report, commands. | `symfony-helpers` |
+| `symfony-data-sync-ds` | Diff screen (two panes, local / remote per field): confirm candidates, resolve conflicts, apply a plan. Consumes the JSON report. | `symfony-data-sync`, `symfony-design-system` |
+| `symfony-data-sync-demo` | Demo pages in `MOJOE/local/design-system`, created by the owner. | `symfony-data-sync-ds` |
+| `symfony-remote` | Symfony integration of `php-api` (Guzzle `Client`, `AbstractApiClient`, API repositories): clients declared in config and injected as services, credentials from env or secrets, ping/health command, rate limiting (`symfony/rate-limiter`). Consumes external APIs; `symfony-api` exposes the app's own. | `php-api` |
+| `symfony-remote-ds` | Screens to manage remote connections. | `symfony-remote`, `symfony-design-system` |
+| `symfony-remote-rocket-chat` | `RocketChatClient extends AbstractApiClient`, its API repositories, and the User ↔ Rocket.Chat data-sync adapter (`fetchList()` / `fetch()` map onto `list()` / `get()`). Former proposal: `NETWORK/archeo/proposed-packages/symfony-rocket-chat/todo/extract-from-network.md`. | `symfony-remote`, `symfony-data-sync` |
+
+Renames pending on the owner's side: `symfony-ds-data-sync` → `symfony-data-sync-ds`,
+`symfony-bridge-rocket-chat` → `symfony-remote-rocket-chat`, `symfony-stripe` →
+`symfony-remote-stripe`.
+
+Nothing Rocket.Chat-specific, and no `App\`, `User`, `Organization` or `SystemLog` reference,
+belongs in `symfony-data-sync`.
 
 ## Read first
 
-- Knowledge page (algorithm, bugs, design): `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/local/network/.wex/knowledge/readme/archeology/data-sync.md.j2`
-- Sources map: `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/local/network/.wex/knowledge/readme/archeology/sources.md.j2`
-- Issues:
-  - `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/gitlab/issues/104.md` (multi-platform interfacing)
-  - `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/gitlab/issues/227.md` (Rocket.Chat user sync spec)
-  - `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/gitlab/issues/261.md` (error handling in async)
-- Design rules: run `wex ai::design/rules --formatter php-code` in this package.
-- Style reference: `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/SERVICES/local/app-board` and `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/PACKAGES/PHP/packages/wexample/symfony-messenger` (queue declaration, `AbstractEntityMessage`).
+- Knowledge page (algorithm, bugs, design):
+  `NETWORK/local/network/.wex/knowledge/readme/archeology/data-sync.md.j2`
+- Sources map: `NETWORK/local/network/.wex/knowledge/readme/archeology/sources.md.j2`
+- Issues: `NETWORK/archeo/gitlab/issues/104.md` (multi-platform interfacing),
+  `227.md` (Rocket.Chat user sync spec), `261.md` (error handling).
+- Safety: `NETWORK/local/network` runs on production data. Read its code only, never run
+  anything against it, anonymize any fixture, never copy a secret.
 
-## Prerequisites / dependencies
+## Steps (each ends with green tests and one commit)
 
-- `wexample/symfony-helpers` (>=9): `AbstractBundle`, `RenderableResponse`, `Class/ArrayToTextTable`, `Entity/Traits/Manipulator/EntityManipulatorTrait`, `AbstractRepository`.
-- `symfony/messenger` for async. Check whether `wexample/symfony-messenger` should carry the message; ask if unclear.
-- No Rocket.Chat SDK and no `App\` reference anywhere in this package.
+1. **Clean slate.** Delete `src/Class/*`, `src/Service/DataSyncManager/*`, `src/Message*`.
+   Keep the bundle, the extension and `services.yaml`, widened so autoconfigure covers every
+   service directory. Add `phpunit.xml` and a `tests/Fixtures/App/AppKernel` on SQLite,
+   modelled on `symfony-loader`. Legacy sources, to read and not copy:
+   - `NETWORK/archeo/trees/develop-131-fos-user/src/Wex/BaseBundle/Service/DataSyncManager/EntitiesSyncManager.php`
+   - `NETWORK/archeo/trees/develop-131-fos-user/src/Wex/BaseBundle/Service/DataSyncManager/RemoteSyncManager.php`
+   - `NETWORK/archeo/trees/develop-131-fos-user/src/Class/EntitySync/`
 
-## Decisions already implied
+   **Checkpoint: report to the owner.**
+2. **Enums and DTOs.** `Enum/SyncOperation` (LocalCreate, LocalLink, LocalUpdate, LocalUnlink,
+   RemoteCreate, RemoteUpdate, RemoteRemove, RemoteDisable, UpToDate, Postponed, Conflict,
+   Candidate) with `side()`. `Enum/SyncOutcome` (Success, Error, NothingToDo, Skipped).
+   `Class/RemoteItem` (id, fields, raw). Unit tests.
+3. **Contracts.** `Interface/RemoteAdapterInterface` (key, list, get, create, update, remove,
+   optional disable). `Interface/LocalStoreInterface` with the default
+   `Service/DoctrineLocalStore`. `Interface/LinkStoreInterface`.
+4. **Link store.** `SyncLink` entity (definition key, local class, local id, remote key,
+   remote id, lastSyncedHash, lastSyncedAt), unique on (definition, localId) and
+   (definition, remoteId), with its repository. `PropertyLinkStore`. Generate the TS entity
+   through the export pipeline (`todo-common.md` §4). Tests: duplicate and orphan-link
+   detection.
+5. **Test doubles** in `src/Testing/`. Port the fixtures of the lost mock remote
+   (`git -C NETWORK/archeo/repo.git show 70cbe29a8^:project/src/Service/DataSyncManager/Remote/MockTestUserRemoteSyncManager.php`):
+   remote missing, remote not synced, should update, should remove remote.
+6. **Definitions.** `Class/SyncDefinition` plus bundle configuration
+   `wexample_symfony_data_sync.definitions.<key>`: `local` class, `adapter` service id,
+   `link_store`, `match` rules, `fields` map with per-field `direction`, `local_filter`,
+   `remote_exclude` predicates, `orphans.remote` (create_local / ignore / remove_remote /
+   report), `orphans.local` (create_remote / ignore / report), `excluded_local` (ignore /
+   disable_remote / remove_remote), `conflict` (local_wins / remote_wins / report),
+   `thresholds`. `Service/SyncDefinitionRegistry`. Test: configuration parsing and defaults.
+7. **Exact matcher.** `Service/Matcher` with `Class/MatchRule/LinkRule` and `ExactFieldRule`
+   (normalizers lower, trim, email, slug). Global one-to-one assignment, highest score
+   first; ties and many-to-one become `Conflict`. Tests include the legacy bug (remote A
+   matches the username, remote B the email: the email rule wins because rules are ordered)
+   and case-insensitive email.
+8. **Planner.** `Class/SyncPlan` of `Class/SyncRelation` (local side, remote side, operation,
+   reason, field diff). Port the legacy decision table (knowledge page, "How it works",
+   passes 1 and 2):
+   - stale link → `LocalUnlink`;
+   - duplicate links → `LocalUnlink` on all but the oldest (not all: legacy bug);
+   - unlinked local with a match → `LocalLink`;
+   - unlinked local without match → per `orphans.local`;
+   - orphan remote → per `orphans.remote`;
+   - field diff → `RemoteUpdate` or `LocalUpdate` per field direction;
+   - both sides changed since the last hash → `Conflict`.
 
-- Matching is an **ordered rule cascade**: stored link, then exact normalized fields, then an optional fuzzy rule with a float score and thresholds. Matching is **global and one-to-one**: ambiguous cases become `Conflict` or `Candidate` and are never auto-linked. The owner explicitly wants "identify similar content from one database to another".
-- Dry-run and a readable diff report are first-class features. The legacy CLI already had `--dry-run`, `--filter`, `--all`, `--entity-id`, `--async`.
-- Keep the rule "one local mutation per relation per run; the others become `Postponed`" and the "converges over several runs" behaviour. Make it visible in the report.
-- Destructive operations (`RemoteRemove`) are never the default. Excluded or disabled locals default to `ignore` (owner question pending: ignore, disable or remove).
-
-## Steps (each ends with green tests)
-
-1. **Clean slate.** Delete the legacy `src/Class/*`, `src/Service/DataSyncManager/*`, `src/Message*`. Keep the bundle, the extension and `services.yaml` so autoconfigure covers all service directories. Add a `tests/` kernel following another wexample package, e.g. `symfony-messenger/tests`. Legacy sources for reference, to read and not copy:
-   - `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/trees/develop-131-fos-user/src/Wex/BaseBundle/Service/DataSyncManager/EntitiesSyncManager.php`
-   - `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/trees/develop-131-fos-user/src/Wex/BaseBundle/Service/DataSyncManager/RemoteSyncManager.php`
-   - `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/trees/develop-131-fos-user/src/Class/EntitySync/`
-2. **Enums and DTOs.**
-   - `Enum/SyncOperation`: LocalCreate, LocalLink, LocalUpdate, LocalUnlink, RemoteCreate, RemoteUpdate, RemoteRemove, RemoteDisable, UpToDate, Postponed, Conflict, Candidate. It exposes `side()`.
-   - `Enum/SyncOutcome`: Success, Error, NothingToDo, Enqueued, Skipped.
-   - `Class/RemoteItem` (id, fields array, raw).
-   - Unit tests.
-3. **Contracts.**
-   - `Interface/RemoteAdapterInterface`: key, list, get, create, update, remove, optional disable.
-   - `Interface/LocalStoreInterface` with the default `Service/DoctrineLocalStore`.
-   - `Interface/LinkStoreInterface`.
-4. **Link store.** Default implementation: a `SyncLink` Doctrine entity (definition key, local class, local id as string, remote key, remote id, lastSyncedHash, lastSyncedAt), unique on (definition, localId) and on (definition, remoteId). Also provide a `PropertyLinkStore` that reads and writes a property on the entity, as network does with `User.rocketChatId`, for apps that keep a column. Tests: duplicate detection, orphan-link detection.
-5. **In-memory test doubles** in `tests/` or `src/Testing/`: an `InMemoryRemoteAdapter` and an `InMemoryLocalStore`. Port the fixtures of the lost mock remote (read with `git -C /home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/repo.git show 70cbe29a8^:project/src/Service/DataSyncManager/Remote/MockTestUserRemoteSyncManager.php`): remote missing, remote not synced, should update, should remove remote.
-6. **Definitions.**
-   - `Class/SyncDefinition` plus bundle configuration `wexample_symfony_data_sync.definitions.<key>` with:
-     - `local` class;
-     - `adapter` service id;
-     - `link_store`;
-     - `match` rules;
-     - `fields` map with per-field `direction`;
-     - `local_filter`;
-     - `remote_exclude` predicates;
-     - `orphans.remote` (create_local / ignore / remove_remote / report) and `orphans.local` (create_remote / ignore / report);
-     - `excluded_local` (ignore / disable_remote / remove_remote);
-     - `conflict` (local_wins / remote_wins / report);
-     - `thresholds`.
-   - `Service/SyncDefinitionRegistry`.
-   - Test: parsing the configuration.
-7. **Matcher.** `Service/Matcher` plus rules in `Class/MatchRule/`:
-   - `LinkRule`;
-   - `ExactFieldRule` with normalizers lower, trim, email and slug;
-   - `FuzzyFieldRule` with a Levenshtein ratio and weights.
-
-   Global one-to-one assignment: take the highest score first; a tie or a many-to-one case becomes `Conflict`. Tests must include the legacy bug case: remote A matches the local username and remote B matches the local email, and the email rule must win because rules are ordered. Also test case-insensitive email.
-8. **Planner.** It produces `Class/SyncPlan` of `Class/SyncRelation` (local side, remote side, operation, reason, field diff). Port the legacy decision table, described in the knowledge page under "How it works" (passes 1 and 2), onto links, the matcher and policies:
-   - a stale link becomes `LocalUnlink`;
-   - a duplicate link becomes `LocalUnlink` on all but the oldest (**not all**, which was a legacy bug);
-   - an unlinked local with a match becomes `LocalLink`;
-   - an unlinked local without a match becomes `RemoteCreate` or ignore, per policy;
-   - an orphan remote follows the orphan policy;
-   - a field diff becomes `RemoteUpdate` or `LocalUpdate` per field direction;
-   - a changed hash on both sides becomes `Conflict`.
-
-   When several definitions share one local class, deduplicate `LocalCreate` for the same matched identity (legacy TODO: "if Rocket.Chat and Nextcloud both need new member AA, create one user"). Tests: one scenario per row, and two adapters at once. The legacy "TODO Fails with two" in `/home/weeger/Desktop/WIP/WEB/WEXAMPLE/NETWORK/archeo/trees/develop-131-fos-user/tests/Unit/Sync/RocketChatSyncTest.php::testRecover` must pass.
-9. **Single-entity planning.** `planOne(definition, entity)` uses `adapter->get()` and matcher lookups and never lists every remote (legacy `syncSingle` listed everything inside the web request). Test with an adapter that throws on `list()`.
-10. **Executor.** Synchronous execution, with `PreOperationEvent` and `PostOperationEvent` and error capture into outcomes (no silent catch). Async execution: one Messenger message per relation (definition key, local id, remote id, operation, plan hash), and a generic handler in this package that re-plans that relation and executes it only when the plan is unchanged.
-    - A missing entity or item gives `Skipped`.
-    - Transient adapter errors are raised as `RecoverableMessageHandlingException` (#261).
-    - Make sure the handler is registered: the legacy bug was that prod had no handler at all.
-
-    Tests: sync mode, async mode with the in-memory transport, and missing entity.
-11. **Report.** `Class/SyncReport`: counts per operation, per-relation field diffs, conflicts and candidates. Renders through `RenderableResponse` (text table and JSON). It replaces `FlatDataset` and `Map::toFlatDataset`. Snapshot tests.
-12. **Commands.**
-    - `data-sync:run <definition> [--dry-run] [--async] [--local-id=] [--remote-id=] [--only=op,...] [--all] [--format=table|json]`. `--only` takes exact operation names; the legacy `str_contains` filter was a bug.
-    - `data-sync:definitions`.
-    - `data-sync:link <definition> <localId> <remoteId>`, to resolve candidates and conflicts manually.
-
-    Command tests on the in-memory adapter.
-13. **Docs.** Update `.wex/knowledge/**` and the README (the generated README still describes the legacy classes). Add a cookbook page "Write an adapter" that uses a Rocket.Chat-like example with no SDK.
+   Keep "one local mutation per relation per run, the others `Postponed`" and make it
+   visible in the report. Deduplicate `LocalCreate` across definitions sharing a local class.
+   Tests: one scenario per row, two adapters at once; the legacy "TODO Fails with two"
+   (`NETWORK/archeo/trees/develop-131-fos-user/tests/Unit/Sync/RocketChatSyncTest.php::testRecover`)
+   must pass.
+9. **Single-entity planning.** `planOne(definition, entity)` uses `adapter->get()` and matcher
+   lookups, never a full listing. Test with an adapter that throws on `list()`.
+10. **Executor.** Synchronous, with `PreOperationEvent` / `PostOperationEvent` and errors
+    captured into outcomes (no silent catch). A missing entity or item gives `Skipped`.
+11. **Report.** `Class/SyncReport`: counts per operation, per-relation field diffs, conflicts,
+    candidates. Renders through `RenderableResponse` (text table and JSON). The JSON is the
+    contract `symfony-data-sync-ds` will consume: keep it stable. Snapshot tests.
+12. **Commands.** `data-sync:run <definition> [--dry-run] [--local-id=] [--remote-id=]
+    [--only=op,...] [--all] [--format=table|json]` (`--only` takes exact operation names;
+    the legacy `str_contains` filter was a bug), `data-sync:definitions`,
+    `data-sync:link <definition> <localId> <remoteId>`. Tests on the in-memory doubles.
+13. **Fuzzy matching.** `Class/MatchRule/FuzzyFieldRule` (Levenshtein ratio, weights) and
+    thresholds `auto_link` / `candidate`. Tests: auto-link, candidate, ignore.
+14. **Docs.** The four standard knowledge pages and a short README. Cookbook page "Write an
+    adapter" with a Rocket.Chat-like example and no SDK.
 
 ## Do not
 
-- Do not copy the legacy classes as they are (`EntitiesSyncManager`, `RemoteSyncManager`, `Map`, `RelationPart*`, `FlatDataset`). Do not keep string operation constants.
-- Do not reference `App\`, Rocket.Chat, `User`, `Organization` or `SystemLog` in this package.
-- Do not make `RemoteRemove` a default of any policy. Do not delete remote accounts when a local entity is disabled unless it is configured.
-- Do not rely on object identity (`===`) to recognize remote items; key everything by id.
-- Do not key remote sides by adapter class name (two instances of one class must be able to coexist); use the definition or adapter key.
-- Do not run anything against network's database or a real Rocket.Chat. Do not copy credentials from network's `.env.local`.
+- Copy the legacy classes (`EntitiesSyncManager`, `RemoteSyncManager`, `Map`,
+  `RelationPart*`, `FlatDataset`) or keep string operation constants.
+- Add Messenger, a queue or a message handler in v1.
+- Depend on `symfony-design-system` or `symfony-remote`.
+- Recognize remote items by object identity (`===`): key everything by id.
+- Key remote sides by adapter class name: two instances of one class must coexist; use the
+  definition or adapter key.
+- Run anything against network's database or a real Rocket.Chat.
 
 ## Acceptance criteria
 
-- `composer install` and the package test suite pass. The bundle boots in the test kernel, and the handler and commands are registered.
-- Scenario tests on in-memory doubles cover:
-  - remote create;
-  - local create from an orphan remote;
-  - link by email and link by username, with rule precedence;
-  - stale link unlinked;
-  - duplicate links (all but one unlinked);
-  - field update in each direction;
-  - conflict when both sides changed;
-  - excluded local under each policy;
-  - protected remote exclusion (role, name, empty email);
-  - two adapters on one entity (the former "fails with two");
-  - `LocalCreate` deduplication across definitions;
-  - dry-run produces no writes;
-  - async round-trip.
-- The `data-sync:run --dry-run --format=json` output is stable (snapshot).
-- The fuzzy rule is covered with thresholds: auto-link, candidate and ignore.
+- `composer install` and the test suite pass; the bundle boots in the test kernel and the
+  commands are registered.
+- Scenario tests on the in-memory doubles cover: remote create; local create from an orphan
+  remote; link by email and by username with rule precedence; stale link unlinked; duplicate
+  links (all but one unlinked); field update in each direction; conflict when both sides
+  changed; excluded local under each policy; protected remote exclusion (role, name, empty
+  email); two adapters on one entity; `LocalCreate` deduplication across definitions;
+  dry-run produces no writes.
+- `data-sync:run --dry-run --format=json` output is stable (snapshot).
+- The fuzzy rule is covered with its thresholds.
