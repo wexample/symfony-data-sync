@@ -1,90 +1,28 @@
 ## Architecture
 
-The library ships one Symfony bundle, two abstract base services an application extends, a group of value objects that model a sync run, and a Messenger message pair for async dispatch.
+A run goes through three services, and only the last one writes.
 
-### Bundle and DI wiring
+### Definitions
 
-src/WexampleSymfonyDataSyncBundle.php extends `AbstractBundle` from `wexample/symfony-helpers` and carries no logic of its own.
+src/DependencyInjection/Configuration.php declares `definitions.<key>`. src/DependencyInjection/WexampleSymfonyDataSyncExtension.php hands the processed configuration to src/Service/SyncDefinitionRegistry.php, with a service locator of the adapters and local stores it names. The registry builds each src/Class/SyncDefinition.php on first use: the adapter, the local store (src/Service/DoctrineLocalStore.php by default), the link store (src/Service/DoctrineLinkStore.php, or a src/Service/PropertyLinkStore.php when `link_property` is set), match rules, field mappings, predicates and policies.
 
-src/DependencyInjection/WexampleSymfonyDataSyncExtension.php loads src/Resources/config/services.yaml, which registers every class under `src/Service/` for autowiring and autoconfiguration. The classes under `src/Class/` are plain PHP objects instantiated directly by the services — they are not Symfony services.
+The contracts are small. src/Interface/RemoteAdapterInterface.php speaks src/Class/RemoteItem.php only — an id and fields — so items are always known by id, never by object identity; `DisablableRemoteAdapterInterface` and `SearchableRemoteAdapterInterface` are optional. src/Interface/LocalStoreInterface.php turns entities into src/Class/LocalItem.php. src/Interface/LinkStoreInterface.php remembers pairs as src/Class/LinkRecord.php, with the hash of the values both sides agreed on at the last sync.
 
-### Services layer
+### Planning
 
-Both abstract base classes live under src/Service/DataSyncManager/EntitiesSyncManager.php and src/Service/DataSyncManager/RemoteSyncManager.php.
+src/Service/SyncPlanner.php reads everything and writes nothing, returning a src/Class/SyncPlan.php of src/Class/SyncRelation.php.
 
-#### EntitiesSyncManager
+1. **Links**, oldest first. A link whose item or entity is gone is unlinked; a second link on an already claimed entity or item is a duplicate and is unlinked, the oldest staying. A valid pair is compared field by field: `SyncValueHelper::hash()` of each side's mapped values against the stored hash tells which side changed, and each field's src/Enum/FieldDirection.php plus the definition's conflict policy decide the src/Class/FieldDiff.php target. Every item met by a link is claimed, even when unlinked, so it is not matched again in the same run.
+2. **The rest**, excluded items aside, goes to src/Service/Matcher.php. Rules run in order over the whole remaining set: an src/Class/MatchRule/ExactFieldRule.php groups both sides by normalized value and links a value held by exactly one local and one remote; any shared value is a conflict and leaves the pool, so a weaker rule never guesses what a stronger one could not decide. A src/Class/MatchRule/FuzzyFieldRule.php scores pairs (weighted Levenshtein ratio), links above `auto_link`, proposes above `candidate`, and turns ties into conflicts. What is left follows the orphan policies.
 
-The central orchestrator. It uses `EntityManipulatorTrait` from `wexample/symfony-helpers`, which supplies `getEntityClassName()` so the rest of the library knows which Doctrine entity class is being managed. A concrete subclass must implement one abstract method:
+`planAll()` then postpones concurrent local writes across definitions: a second update of the same entity, or a second creation for the same identity (the values its exact rules would match on).
 
-- `buildLocalEntityName(AbstractEntityInterface $entity): string` — a human-readable label used in the `Map` report.
+`planOne()` plans one entity without listing the remote, through its link or the adapter's search.
 
-It also owns the `$remoteSyncManagers` array. Application code populates this array (typically via constructor injection in the subclass) with one `RemoteSyncManager` instance per external source to consult.
+### Execution
 
-Its public API exposes two entry points:
+src/Service/SyncExecutor.php runs relations in order. Before writing it checks that the entity and the item still exist (`skipped` otherwise); after an update it stores the hash of the values both sides now hold. A throwing relation becomes an `error` outcome with its message and the run goes on. `PreOperationEvent` and `PostOperationEvent` are dispatched around each operation. The result is a src/Class/SyncReport.php, whose `toArray()` is the contract of the console JSON and of `symfony-data-sync-ds`.
 
-- `sync()` — full traversal of all local entities against all registered remote sources.
-- `syncSingle()` — identical to `sync()` but filters the resulting `Map` down to a single entity.
+### Testing
 
-`EntitiesSyncManager` defines every operation constant used throughout the library: `OPERATION_LOCAL_CREATE`, `OPERATION_LOCAL_RECOVER`, `OPERATION_LOCAL_REMOVE`, `OPERATION_LOCAL_UPDATE`, `OPERATION_REMOTE_CREATE`, `OPERATION_REMOTE_REMOVE`, `OPERATION_REMOTE_UPDATE`, `OPERATION_UP_TO_DATE`, `OPERATION_NOT_FOUND`, and `OPERATION_POSTPONED`.
-
-#### RemoteSyncManager
-
-Represents one external data source. A concrete subclass must implement the following abstract methods, grouped by concern:
-
-**Look-up**
-- `findRemoteItems(): array` — return all items from the remote source.
-- `hasRemoteItemForEntity(AbstractEntityInterface $entity): bool`
-- `getRemoteItemForEntity(AbstractEntityInterface $entity): mixed`
-- `getEntityForRemote(mixed $item): ?AbstractEntityInterface`
-- `getRemoteItemById(mixed $id): mixed`
-- `getRemoteItemId(mixed $remoteItem): mixed`
-- `buildRemoteItemName(mixed $item): string`
-
-**Write operations on the remote side**
-- `operationCreateRemoteItem(AbstractEntityInterface $entity): string`
-- `operationRemoveRemoteItem(mixed $item): string`
-
-**Write operations on the local side**
-- `canCreateLocalEntityFromRemoteItem(mixed $item): bool`
-- `operationCreateLocalEntityFromRemote($item): string`
-- `operationAttachLocalEntityToRemoteItem(AbstractEntityInterface $entity, mixed $item): string`
-
-Optional overrides include `init(Map $map)` (called before traversal, useful for opening connections), `isRemoteItemMightBeSync()`, `isLocalEntityShouldBeSync()`, `shouldRemoteItemBeUpdatedAccordingLocalEntity()`, `shouldLocalEntityBeUpdatedAccordingRemoteItem()`, and `recoverRemoteItem()` (attempts to match an orphan local entity to an existing remote item).
-
-### Data model
-
-These value objects are constructed during a sync run and hold no Symfony dependencies.
-
-#### Map
-
-src/Class/Map.php is the output of one `sync()` call. It holds the full list of `Relation` objects and the `remoteOrphansSyncMode` string that controls what happens when a remote item has no local counterpart. Helper methods filter the list by operation string (`getFilteredRelations`), strip already-up-to-date entries (`getNonUpToDateRelations`), narrow to a single entity (`applyFilterLocalEntity`), or look up the `RelationPart` for a given entity or remote item.
-
-#### Relation
-
-src/Class/Relation.php pairs one local entity (or placeholder) with its counterparts across every remote source. It holds at most one `RelationPartLocal` and one `RelationPartRemote` per `RemoteSyncManager`. `serialize()` converts the whole relation to a plain array; `EntitiesSyncManager::unserializeRelation()` reconstructs it from that array, which is how the async path reconstructs context inside the message handler.
-
-#### RelationPart family
-
-src/Class/RelationPart.php is the abstract base. It stores the subject object, the pending operation string, the response string written after execution, a back-reference to the parent `Relation`, and the service that owns this side of the pair.
-
-- src/Class/RelationPartLocal.php wraps a Doctrine entity. `getPart()` returns `"local"` and `getObjectId()` returns `$entity->getId()`.
-- src/Class/RelationPartRemote.php wraps whatever the remote source returns. `getPart()` returns `"remote"` and `getObjectId()` delegates to `RemoteSyncManager::getRemoteItemId()`.
-- src/Class/RelationItemPlaceHolder.php stands in when the real item does not yet exist — for example, the local entity that will be created, or the remote slot to be created. Its label is updated by `RelationPart::setOperation()` so the display always reflects the latest planned operation.
-
-### Async path
-
-src/Message/EntitySyncMessage.php wraps the array produced by `Relation::serialize()`. When `sync()` is called with `$async = true`, every non-up-to-date relation is serialized and dispatched via Symfony Messenger's `MessageBusInterface`. Each part's response is set to `RESPONSE_ENQUEUED` immediately so the returned `Map` can be inspected without waiting.
-
-src/MessageHandler/EntitySyncMessageHandler.php is a Messenger handler (`#[AsMessageHandler]`). It delegates to an application-supplied concrete `EntitiesSyncManager` (`UserEntitiesSyncManager` in the example), which calls `syncMessage()`: that method reconstructs a `Relation` via `unserializeRelation()` and passes it directly to `runRelationsOperations()`.
-
-### Call path through a sync run
-
-1. The caller invokes `EntitiesSyncManager::sync()`.
-2. A `Map` is created; `init()` is called on every `RemoteSyncManager` (the hook for opening connections or caching remote collections).
-3. **Local-to-remote pass** — `mapLocalToRemote()` loads all Doctrine entities from `buildEntitiesQuery()`. For each entity a `Relation` is added to the `Map`; every `RemoteSyncManager::mapLocalEntity()` inspects the entity and records the required operation on its `RelationPartLocal` and a `RelationPartRemote` (or a placeholder if no remote counterpart exists yet). If a local operation is queued, pending remote operations from other managers are downgraded to `OPERATION_POSTPONED`.
-4. **Remote-to-local pass** — `mapRemoteToLocal()` calls `RemoteSyncManager::mapFromAllRemotes()` for every manager. Each remote item is matched to an existing `Relation` if possible; orphans produce new `Relation`s. `mapRemoteItem()` determines the operation on the remote side.
-5. The `Map` is optionally filtered by operation string, by a single entity, or reduced to non-up-to-date entries only.
-6. **Execution** takes one of two paths:
-   - **Synchronous** — `runRelationsOperations()` iterates the relations. When the local part has an operation it calls `executeLocalEntityOperation()` on the responsible service. For each remote part whose operation is still actionable (no blocking local change), it calls `executeRemoteItemOperation()`. Each part's response string is set to the result.
-   - **Asynchronous** — each relation is serialized and dispatched as `EntitySyncMessage`; the handler re-runs steps 2 and 6 (compressed into `syncMessage()`) for each message in the queue.
-7. `sync()` returns the `Map`, which now carries each part's operation and response string, ready for logging or display.
+src/Testing/InMemoryRemoteAdapter.php, src/Testing/InMemoryLocalStore.php and src/Testing/InMemoryLinkStore.php ship with the package so applications and adapters test definitions without a network or a database; the in-memory link store accepts duplicates, to seed the corrupted states the planner repairs. The package's own suite runs the legacy scenarios (remote missing, remote not synced, should update, should remove remote), the decision table row by row, and the commands against a fixture kernel.

@@ -7,8 +7,23 @@ Author: agent:archeology, revised with the owner on 2026-09-27
 ## Status
 
 Written by the 2026-09 network archaeology pass, then discussed and validated with the owner
-on 2026-09-27. The decisions below are settled; the steps may start. Stop and report after
-step 1 (clean slate plus booting test kernel).
+on 2026-09-27. Engine built on 2026-09-28 (steps 1–14): 55 tests green, legacy scenarios and
+decision table included.
+
+Divergences from the steps below, decided while building:
+- `SyncOperation::Unmatched` added: the `report` policies needed an operation that lists without acting.
+- No `LinkRule` class: stored links are handled structurally by the planner before any rule runs.
+- `SearchableRemoteAdapterInterface` (`findBy`) added: `planOne()` needs it to match without listing;
+  without it an unlinked entity waits for the next full run.
+- An update pushes and pulls its fields in the same run (they are disjoint); only concurrent writes
+  of one local entity across definitions are `Postponed`.
+- Commands render with `SymfonyStyle` + `SyncReport::toArray()` like `remote:status`, not
+  `RenderableResponse`, which no other suite package uses.
+- Not done: the TS export of `SyncLink` (needs an app to run the pipeline) and
+  `#[PseudocodeExport]` (would add `php-pseudocode` as a dependency).
+
+Next: `symfony-data-sync-ds` (reads `SyncReport::toArray()`), `symfony-data-sync-demo`, and the
+Rocket.Chat user adapter in `symfony-remote-rocket-chat`.
 
 Paths are relative to the PHP suite root (`PACKAGES/PHP/packages/wexample/`), except those
 starting with `NETWORK/`, which are relative to `WEXAMPLE/`.

@@ -1,10 +1,5 @@
-# wexample/symfony-data-sync
+`symfony-data-sync` keeps Doctrine entities in step with external data sources — a chat server's users, a cloud's accounts, a CRM's organizations. Each pairing is a *definition*: a local class, a remote adapter, the rules that recognize an entity and an item as the same thing, the fields that travel and in which direction, and what to do with what has no counterpart.
 
-Version: 1.0.86
+A run is planned before it writes anything: every decision — link, create, update, unlink, conflict, candidate — is a relation of a plan that `--dry-run` prints and `symfony-data-sync-ds` will show. Links are stored explicitly, so an entity and an item are never recognized by chance twice; matching is global and one to one, so ambiguity becomes a conflict for a human, never a guess. Defaults report and never destroy: removing or creating anything is a policy the application writes down.
 
-A data-sync service for Symfony
-
-## Table of Contents
-
-
-
+Adapters know their service and nothing of the application: `symfony-remote-rocket-chat` is one. The package ships in-memory doubles so definitions are tested without a network or a database.
