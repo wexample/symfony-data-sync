@@ -22,7 +22,9 @@
   ],
   "require": {
     "php": ">=8.5",
-    "wexample/symfony-helpers": ">=11.0.0"
+    "wexample/symfony-helpers": ">=11.0.0",
+    "doctrine/orm": "^3.0",
+    "symfony/property-access": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "*",
