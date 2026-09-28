@@ -5,12 +5,13 @@ namespace Wexample\SymfonyDataSync\Testing;
 use LogicException;
 use Wexample\SymfonyDataSync\Class\RemoteItem;
 use Wexample\SymfonyDataSync\Interface\DisablableRemoteAdapterInterface;
+use Wexample\SymfonyDataSync\Interface\SearchableRemoteAdapterInterface;
 
 /**
  * A remote held in an array, for tests of definitions and adapters' callers.
  * Every write is recorded in $calls, in order.
  */
-class InMemoryRemoteAdapter implements DisablableRemoteAdapterInterface
+class InMemoryRemoteAdapter implements DisablableRemoteAdapterInterface, SearchableRemoteAdapterInterface
 {
     /**
      * @var array<string, array<string, mixed>>
@@ -49,6 +50,15 @@ class InMemoryRemoteAdapter implements DisablableRemoteAdapterInterface
     public function get(string $id): ?RemoteItem
     {
         return isset($this->items[$id]) ? new RemoteItem($id, $this->items[$id]) : null;
+    }
+
+    public function findBy(string $field, mixed $value): iterable
+    {
+        foreach ($this->items as $id => $fields) {
+            if (($fields[$field] ?? null) == $value) {
+                yield new RemoteItem((string) $id, $fields);
+            }
+        }
     }
 
     public function create(array $fields): RemoteItem
