@@ -69,9 +69,9 @@ at most one extension suffix. Known extensions: `-ds` (screens on the design sys
 | `symfony-data-sync` | Engine: definitions, adapters contract, link store, matcher, planner, executor, report, commands. | `symfony-helpers` |
 | `symfony-data-sync-ds` | Diff screen (two panes, local / remote per field): confirm candidates, resolve conflicts, apply a plan. Consumes the JSON report. | `symfony-data-sync`, `symfony-design-system` |
 | `symfony-data-sync-demo` | Demo pages in `MOJOE/local/design-system`, created by the owner. | `symfony-data-sync-ds` |
-| `symfony-remote` | Symfony integration of `php-api` (Guzzle `Client`, `AbstractApiClient`, API repositories): clients declared in config and injected as services, credentials from env or secrets, ping/health command, rate limiting (`symfony/rate-limiter`). Consumes external APIs; `symfony-api` exposes the app's own. | `php-api` |
+| `symfony-remote` | Symfony integration of the generic `php-api` client (`AbstractApiClient`, `ClientOptions` for timeout, retries and rate limit, `checkConnection()`): clients declared in config and injected as services, credentials from env or secrets, health command. Consumes external APIs; `symfony-api` exposes the app's own. The wexample entity layer lives apart in `php-api-entity`. | `php-api` |
 | `symfony-remote-ds` | Screens to manage remote connections. | `symfony-remote`, `symfony-design-system` |
-| `symfony-remote-rocket-chat` | `RocketChatClient extends AbstractApiClient`, its API repositories, and the User ↔ Rocket.Chat data-sync adapter (`fetchList()` / `fetch()` map onto `list()` / `get()`). Former proposal: `NETWORK/archeo/proposed-packages/symfony-rocket-chat/todo/extract-from-network.md`. | `symfony-remote`, `symfony-data-sync` |
+| `symfony-remote-rocket-chat` | `RocketChatClient extends AbstractApiClient` (Rocket.Chat does not follow the wexample envelope, so no `php-api-entity`), and the User ↔ Rocket.Chat data-sync adapter. Former proposal: `NETWORK/archeo/proposed-packages/symfony-rocket-chat/todo/extract-from-network.md`. | `symfony-remote`, `symfony-data-sync` |
 
 Renames done on 2026-09-27: `symfony-ds-data-sync` → `symfony-data-sync-ds`,
 `symfony-bridge-rocket-chat` → `symfony-remote-rocket-chat`, `symfony-stripe` →
