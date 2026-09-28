@@ -10,6 +10,7 @@ use Wexample\SymfonyDataSync\Class\LinkRecord;
 use Wexample\SymfonyDataSync\Class\MatchRule\ExactFieldRule;
 use Wexample\SymfonyDataSync\Class\SyncDefinition;
 use Wexample\SymfonyDataSync\Class\SyncReport;
+use Wexample\SymfonyDataSync\Enum\FieldDirection;
 use Wexample\SymfonyDataSync\Enum\MatchNormalizer;
 use Wexample\SymfonyDataSync\Enum\OrphanLocalPolicy;
 use Wexample\SymfonyDataSync\Enum\OrphanRemotePolicy;
@@ -85,6 +86,24 @@ class SyncExecutorTest extends TestCase
 
         $this->sync(orphanRemote: OrphanRemotePolicy::RemoveRemote);
         $this->assertArrayNotHasKey('r9', $this->remote->items);
+    }
+
+    public function testACreationWritesPulledFieldsToo(): void
+    {
+        // A pulled field left out of the creation would come back empty and
+        // erase the local value on the next run.
+        $this->locals = new InMemoryLocalStore(['u1' => ['username' => 'ada', 'email' => 'ada@example.test', 'name' => 'Ada']]);
+        $definition = new SyncDefinition(
+            'users', stdClass::class, $this->remote, $this->locals, $this->links,
+            fields: [new FieldMapping('username', 'username'), new FieldMapping('name', 'name', FieldDirection::RemoteToLocal)],
+            orphanLocal: OrphanLocalPolicy::CreateRemote,
+        );
+        $planner = new SyncPlanner(new Matcher());
+
+        (new SyncExecutor())->execute($planner->plan($definition), ['users' => $definition]);
+
+        $this->assertSame('Ada', $this->remote->items['remote-1']['name']);
+        $this->assertSame([], $planner->plan($definition)->withoutUpToDate()->relations);
     }
 
     public function testADryRunWritesNothing(): void

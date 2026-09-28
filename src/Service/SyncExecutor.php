@@ -169,7 +169,10 @@ class SyncExecutor
     }
 
     /**
-     * The mapped values of one side, keyed for the other: what a creation writes.
+     * Every mapped value of one side, keyed for the other: what a creation
+     * writes. Directions govern later updates, not creations: a field left
+     * out here would be empty on the new item, and a pulled field would then
+     * erase the local value on the next run.
      *
      * @param array<string, mixed> $fields
      *
@@ -180,11 +183,9 @@ class SyncExecutor
         $values = [];
         foreach ($definition->fields as $mapping) {
             /** @var FieldMapping $mapping */
-            if (SyncSide::Remote === $target && $mapping->direction->pushes()) {
+            if (SyncSide::Remote === $target) {
                 $values[$mapping->remoteField] = $fields[$mapping->localField] ?? null;
-            }
-
-            if (SyncSide::Local === $target && $mapping->direction->pulls()) {
+            } else {
                 $values[$mapping->localField] = $fields[$mapping->remoteField] ?? null;
             }
         }

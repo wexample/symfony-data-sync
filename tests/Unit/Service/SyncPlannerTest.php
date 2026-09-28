@@ -168,6 +168,19 @@ class SyncPlannerTest extends TestCase
         $this->assertOperations([SyncOperation::RemoteRemove], $this->plan(new InMemoryRemoteAdapter($remote), excludedLocal: ExcludedLocalPolicy::RemoveRemote));
     }
 
+    public function testADisabledRemoteIsNotDisabledAgain(): void
+    {
+        $this->locals = new InMemoryLocalStore(['u1' => ['username' => 'ada', 'email' => 'ada@example.test', 'enabled' => false]]);
+        $this->links->seed('users', new LinkRecord('u1', 'r1'));
+
+        $plan = $this->plan(
+            new InMemoryRemoteAdapter(['r1' => ['username' => 'ada', 'email' => 'ada@example.test', 'active' => false]]),
+            excludedLocal: ExcludedLocalPolicy::DisableRemote,
+        );
+
+        $this->assertOperations([], $plan);
+    }
+
     public function testProtectedRemotesAreNeverTouched(): void
     {
         $this->locals = new InMemoryLocalStore();

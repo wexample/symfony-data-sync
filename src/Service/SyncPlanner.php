@@ -18,6 +18,7 @@ use Wexample\SymfonyDataSync\Enum\OrphanRemotePolicy;
 use Wexample\SymfonyDataSync\Enum\SyncOperation;
 use Wexample\SymfonyDataSync\Enum\SyncSide;
 use Wexample\SymfonyDataSync\Helper\SyncValueHelper;
+use Wexample\SymfonyDataSync\Interface\DisablableRemoteAdapterInterface;
 use Wexample\SymfonyDataSync\Interface\SearchableRemoteAdapterInterface;
 
 /**
@@ -148,7 +149,9 @@ class SyncPlanner
         if ($definition->isLocalExcluded($local)) {
             return match ($definition->excludedLocal) {
                 ExcludedLocalPolicy::Ignore => null,
-                ExcludedLocalPolicy::DisableRemote => new SyncRelation($definition->key, SyncOperation::RemoteDisable, 'The local entity is excluded.', $local, $remote, $link),
+                ExcludedLocalPolicy::DisableRemote => $definition->adapter instanceof DisablableRemoteAdapterInterface && $definition->adapter->isDisabled($remote)
+                    ? null
+                    : new SyncRelation($definition->key, SyncOperation::RemoteDisable, 'The local entity is excluded.', $local, $remote, $link),
                 ExcludedLocalPolicy::RemoveRemote => new SyncRelation($definition->key, SyncOperation::RemoteRemove, 'The local entity is excluded.', $local, $remote, $link),
             };
         }

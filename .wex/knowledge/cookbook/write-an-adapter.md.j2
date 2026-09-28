@@ -52,6 +52,11 @@ final readonly class ChatUserAdapter implements DisablableRemoteAdapterInterface
         $this->client->setActive($id, false);            // keeps the account and its history
     }
 
+    public function isDisabled(RemoteItem $item): bool
+    {
+        return false === $item->get('active');           // so a disabled account is not disabled again
+    }
+
     private function toItem(array $user): RemoteItem
     {
         return new RemoteItem($user['_id'], [

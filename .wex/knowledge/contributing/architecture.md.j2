@@ -21,7 +21,11 @@ The contracts are small. {{ path("src/Interface/RemoteAdapterInterface.php") }} 
 
 ### Execution
 
-{{ path("src/Service/SyncExecutor.php") }} runs relations in order. Before writing it checks that the entity and the item still exist (`skipped` otherwise); after an update it stores the hash of the values both sides now hold. A throwing relation becomes an `error` outcome with its message and the run goes on. `PreOperationEvent` and `PostOperationEvent` are dispatched around each operation. The result is a {{ path("src/Class/SyncReport.php") }}, whose `toArray()` is the contract of the console JSON and of `symfony-data-sync-ds`.
+{{ path("src/Service/SyncExecutor.php") }} runs relations in order. Before writing it checks that the entity and the item still exist (`skipped` otherwise); after an update it stores the hash of the values both sides now hold. A creation writes every mapped field, whatever its direction: directions govern later updates, and a pulled field left out would come back empty and erase the local value. A throwing relation becomes an `error` outcome with its message and the run goes on. `PreOperationEvent` and `PostOperationEvent` are dispatched around each operation. The result is a {{ path("src/Class/SyncReport.php") }}, whose `toArray()` is the contract of the console JSON and of `symfony-data-sync-ds`.
+
+### Around the planner
+
+{{ path("src/Service/SyncRunner.php") }} plans and runs definitions by key with the filters of `data-sync:run`; {{ path("src/Service/SyncLinker.php") }} links a pair by hand after checking both exist and neither is linked; {{ path("src/Service/SyncResolver.php") }} settles a pair's field conflict by the side a human keeps, writing its values on the other side. The commands and `symfony-data-sync-ds` share these three.
 
 ### Testing
 

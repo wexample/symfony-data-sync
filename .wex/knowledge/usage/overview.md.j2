@@ -70,4 +70,6 @@ $plan = $planner->planOne($definition, $definition->localStore->find($definition
 $report = $executor->execute($plan, ['chat_users' => $definition]);
 ```
 
+A field conflict (`report` policy) waits for a human: `SyncResolver::resolve($key, $localId, SyncSide::Local)` keeps the application's values, `SyncSide::Remote` the remote's; the screens of `symfony-data-sync-ds` offer both. With `link_property`, which keeps no history, a `both` field that differs is always a conflict.
+
 `planOne()` never lists the remote: it follows the entity's link, or searches the adapter when it implements `SearchableRemoteAdapterInterface`. Otherwise an unlinked entity waits for the next full run rather than risk a duplicate.

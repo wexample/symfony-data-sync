@@ -89,6 +89,11 @@ class InMemoryRemoteAdapter implements DisablableRemoteAdapterInterface, Searcha
         $this->calls[] = ['remove', $id];
     }
 
+    public function isDisabled(RemoteItem $item): bool
+    {
+        return false === $item->get('active');
+    }
+
     public function disable(string $id): void
     {
         $this->items[$id]['active'] = false;
