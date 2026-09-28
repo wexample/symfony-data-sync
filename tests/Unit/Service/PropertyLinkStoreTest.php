@@ -19,7 +19,7 @@ class PropertyLinkStoreTest extends TestCase
             'u2' => ['username' => 'bob', 'chatId' => null],
         ]);
         $store = new PropertyLinkStore($locals, 'chatId');
-        $definition = new SyncDefinition('users', stdClass::class, new InMemoryRemoteAdapter(), new InMemoryLinkStore());
+        $definition = new SyncDefinition('users', stdClass::class, new InMemoryRemoteAdapter(), $locals, new InMemoryLinkStore());
 
         $this->assertSame('r1', $store->findByLocal($definition, 'u1')->remoteId);
         $this->assertCount(1, $store->all($definition));

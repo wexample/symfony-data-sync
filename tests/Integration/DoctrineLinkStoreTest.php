@@ -9,6 +9,7 @@ use stdClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Wexample\SymfonyDataSync\Class\SyncDefinition;
 use Wexample\SymfonyDataSync\Service\DoctrineLinkStore;
+use Wexample\SymfonyDataSync\Testing\InMemoryLocalStore;
 use Wexample\SymfonyDataSync\Testing\InMemoryRemoteAdapter;
 
 class DoctrineLinkStoreTest extends KernelTestCase
@@ -23,7 +24,7 @@ class DoctrineLinkStoreTest extends KernelTestCase
         (new SchemaTool($entityManager))->createSchema($entityManager->getMetadataFactory()->getAllMetadata());
 
         $this->store = self::getContainer()->get(DoctrineLinkStore::class);
-        $this->definition = new SyncDefinition('users', stdClass::class, new InMemoryRemoteAdapter(), $this->store);
+        $this->definition = new SyncDefinition('users', stdClass::class, new InMemoryRemoteAdapter(), new InMemoryLocalStore(), $this->store);
     }
 
     public function testALinkIsStoredAndSynced(): void

@@ -7,6 +7,7 @@ use Wexample\SymfonyDataSync\Enum\ExcludedLocalPolicy;
 use Wexample\SymfonyDataSync\Enum\OrphanLocalPolicy;
 use Wexample\SymfonyDataSync\Enum\OrphanRemotePolicy;
 use Wexample\SymfonyDataSync\Interface\LinkStoreInterface;
+use Wexample\SymfonyDataSync\Interface\LocalStoreInterface;
 use Wexample\SymfonyDataSync\Interface\MatchRuleInterface;
 use Wexample\SymfonyDataSync\Interface\RemoteAdapterInterface;
 
@@ -28,6 +29,7 @@ final readonly class SyncDefinition
         public string $key,
         public string $localClass,
         public RemoteAdapterInterface $adapter,
+        public LocalStoreInterface $localStore,
         public LinkStoreInterface $linkStore,
         public array $matchRules = [],
         public array $fields = [],

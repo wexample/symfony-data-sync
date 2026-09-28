@@ -24,7 +24,8 @@
     "php": ">=8.5",
     "wexample/symfony-helpers": ">=11.0.0",
     "doctrine/orm": "^3.0",
-    "symfony/property-access": "*"
+    "symfony/property-access": "*",
+    "symfony/string": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "*",
