@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Wexample\Pseudocode\Attribute\PseudocodeExport;
 use Wexample\SymfonyDataSync\Repository\SyncLinkRepository;
 use Wexample\SymfonyHelpers\Entity\AbstractEntity;
 use Wexample\SymfonyHelpers\Entity\Traits\HasDateCreatedTrait;
@@ -18,6 +19,7 @@ use Wexample\SymfonyHelpers\Entity\Traits\HasDateCreatedTrait;
 #[ORM\Table(name: 'sync_link')]
 #[ORM\UniqueConstraint(name: 'sync_link_local', columns: ['definition_key', 'local_id'])]
 #[ORM\UniqueConstraint(name: 'sync_link_remote', columns: ['definition_key', 'remote_id'])]
+#[PseudocodeExport(inherited: true)]
 class SyncLink extends AbstractEntity
 {
     use HasDateCreatedTrait;

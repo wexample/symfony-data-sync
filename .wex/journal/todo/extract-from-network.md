@@ -19,8 +19,10 @@ Divergences from the steps below, decided while building:
   of one local entity across definitions are `Postponed`.
 - Commands render with `SymfonyStyle` + `SyncReport::toArray()` like `remote:status`, not
   `RenderableResponse`, which no other suite package uses.
-- Not done: the TS export of `SyncLink` (needs an app to run the pipeline) and
-  `#[PseudocodeExport]` (would add `php-pseudocode` as a dependency).
+- `SyncLink` carries `#[PseudocodeExport]` with `php-pseudocode` as a dev dependency only; the bundle
+  does not implement `PseudocodeBundleInterface` (a runtime dependency). Its TS entity, repository and
+  JSON schema were generated from `MOJOE/local/design-system`, whose autoloader lacks the package:
+  the console was booted with the namespace added by hand for the run.
 
 Next: `symfony-data-sync-ds` (reads `SyncReport::toArray()`), `symfony-data-sync-demo`, and the
 Rocket.Chat user adapter in `symfony-remote-rocket-chat`.

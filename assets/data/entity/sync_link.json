@@ -1,0 +1,219 @@
+{
+    "name": "sync_link",
+    "type": "class",
+    "description": "One local entity known as one remote item, for one definition. The unique\nconstraints make a duplicate or a many-to-one link impossible to store.",
+    "properties": [
+        {
+            "name": "dateCreated",
+            "type": "DateTimeInterface",
+            "nullable": true,
+            "default": null
+        },
+        {
+            "name": "id",
+            "type": "Symfony\\Component\\Uid\\Uuid"
+        },
+        {
+            "name": "definitionKey",
+            "type": "string"
+        },
+        {
+            "name": "localClass",
+            "type": "string"
+        },
+        {
+            "name": "localId",
+            "type": "string"
+        },
+        {
+            "name": "remoteId",
+            "type": "string"
+        },
+        {
+            "name": "lastSyncedHash",
+            "type": "string",
+            "nullable": true,
+            "default": null
+        },
+        {
+            "name": "lastSyncedAt",
+            "type": "DateTimeImmutable",
+            "nullable": true,
+            "default": null
+        }
+    ],
+    "methods": [
+        {
+            "type": "method",
+            "name": "getDateCreated",
+            "return": {
+                "type": "DateTimeInterface"
+            }
+        },
+        {
+            "type": "method",
+            "name": "setDateCreatedNow",
+            "return": {
+                "type": "self"
+            }
+        },
+        {
+            "type": "method",
+            "name": "setDateCreated",
+            "parameters": [
+                {
+                    "type": "DateTimeInterface",
+                    "name": "dateCreated"
+                }
+            ],
+            "return": {
+                "type": "self"
+            }
+        },
+        {
+            "type": "method",
+            "name": "buildEntityPath",
+            "parameters": [
+                {
+                    "type": "string",
+                    "name": "className"
+                }
+            ],
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getEntityKeyName",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getEntityShortName",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getId",
+            "return": {
+                "type": "Symfony\\Component\\Uid\\Uuid"
+            }
+        },
+        {
+            "type": "method",
+            "name": "setId",
+            "parameters": [
+                {
+                    "type": "Symfony\\Component\\Uid\\Uuid",
+                    "name": "id"
+                }
+            ],
+            "return": {
+                "type": "void"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getTableizedName",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getCamelName",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "__construct",
+            "parameters": [
+                {
+                    "type": "string",
+                    "name": "definitionKey"
+                },
+                {
+                    "type": "string",
+                    "name": "localClass"
+                },
+                {
+                    "type": "string",
+                    "name": "localId"
+                },
+                {
+                    "type": "string",
+                    "name": "remoteId"
+                }
+            ]
+        },
+        {
+            "type": "method",
+            "name": "getDefinitionKey",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getLocalClass",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getLocalId",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getRemoteId",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getLastSyncedHash",
+            "return": {
+                "type": "string"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getLastSyncedAt",
+            "return": {
+                "type": "DateTimeImmutable"
+            }
+        },
+        {
+            "type": "method",
+            "name": "markSynced",
+            "parameters": [
+                {
+                    "type": "string",
+                    "name": "hash"
+                }
+            ],
+            "return": {
+                "type": "self"
+            }
+        },
+        {
+            "type": "method",
+            "name": "getCreatedAt",
+            "return": {
+                "type": "DateTimeInterface"
+            }
+        }
+    ]
+}

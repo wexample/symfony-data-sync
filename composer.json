@@ -30,7 +30,8 @@
   "require-dev": {
     "phpunit/phpunit": "*",
     "wexample/symfony-testing": "*",
-    "symfony/event-dispatcher": "*"
+    "symfony/event-dispatcher": "*",
+    "wexample/php-pseudocode": "*"
   },
   "repositories": [
     {
