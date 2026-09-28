@@ -1,12 +1,17 @@
 {
   "name": "wexample/symfony-data-sync",
-  "description": "A data-sync service for Symfony",
+  "description": "Reconciles local Doctrine entities with external data sources: definitions, adapters, links, matching, plans and dry runs",
   "type": "library",
   "license": "MIT",
   "version": "2.0.6",
   "autoload": {
     "psr-4": {
       "Wexample\\SymfonyDataSync\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Wexample\\SymfonyDataSync\\Tests\\": "tests/"
     }
   },
   "authors": [
@@ -19,6 +24,19 @@
     "php": ">=8.5",
     "wexample/symfony-helpers": ">=11.0.0"
   },
+  "require-dev": {
+    "phpunit/phpunit": "*",
+    "wexample/symfony-testing": "*"
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../*",
+      "options": {
+        "symlink": true
+      }
+    }
+  ],
   "extra": {
     "install": {
       "bundle_env": "all"
