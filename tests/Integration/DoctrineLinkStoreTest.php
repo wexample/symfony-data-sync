@@ -23,7 +23,7 @@ class DoctrineLinkStoreTest extends KernelTestCase
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         (new SchemaTool($entityManager))->createSchema($entityManager->getMetadataFactory()->getAllMetadata());
 
-        $this->store = self::getContainer()->get(DoctrineLinkStore::class);
+        $this->store = self::getContainer()->get('test.link_store');
         $this->definition = new SyncDefinition('users', stdClass::class, new InMemoryRemoteAdapter(), new InMemoryLocalStore(), $this->store);
     }
 

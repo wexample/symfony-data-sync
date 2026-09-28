@@ -1,8 +1,43 @@
+wexample_symfony_data_sync:
+  definitions:
+    users:
+      local: stdClass
+      adapter: test.remote
+      local_store: test.locals
+      match:
+        - { local: email, remote: email, normalize: [email] }
+        - { type: fuzzy, fields: [{ local: name, remote: name, weight: 2 }, { local: city, remote: city }] }
+      fields:
+        username: username
+        email: { remote: mail, direction: both }
+      local_exclude:
+        - { field: enabled, operator: equals, value: false }
+      remote_exclude:
+        - { field: roles, operator: contains, value: bot }
+      orphans: { local: create_remote }
+      conflict: local_wins
+    minimal:
+      local: stdClass
+      adapter: test.remote
+      local_store: test.locals
+      link_property: chatId
+
 services:
   _defaults:
     autowire: true
     autoconfigure: true
 
-  # Public so tests fetch them even though nothing injects them yet.
-  Wexample\SymfonyDataSync\Service\DoctrineLinkStore:
+  test.remote:
+    class: Wexample\SymfonyDataSync\Testing\InMemoryRemoteAdapter
+
+  test.locals:
+    class: Wexample\SymfonyDataSync\Testing\InMemoryLocalStore
+
+  # Public aliases: redeclaring the services would drop what the extension sets on them.
+  test.link_store:
+    alias: Wexample\SymfonyDataSync\Service\DoctrineLinkStore
+    public: true
+
+  test.registry:
+    alias: Wexample\SymfonyDataSync\Service\SyncDefinitionRegistry
     public: true
