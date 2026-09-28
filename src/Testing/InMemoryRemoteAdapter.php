@@ -52,10 +52,15 @@ class InMemoryRemoteAdapter implements DisablableRemoteAdapterInterface, Searcha
         return isset($this->items[$id]) ? new RemoteItem($id, $this->items[$id]) : null;
     }
 
+    /**
+     * Compares strings case-insensitively, as most services do for emails and usernames.
+     */
     public function findBy(string $field, mixed $value): iterable
     {
         foreach ($this->items as $id => $fields) {
-            if (($fields[$field] ?? null) == $value) {
+            $candidate = $fields[$field] ?? null;
+
+            if (is_string($candidate) && is_string($value) ? 0 === strcasecmp($candidate, $value) : $candidate === $value) {
                 yield new RemoteItem((string) $id, $fields);
             }
         }

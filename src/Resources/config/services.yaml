@@ -5,5 +5,5 @@ services:
         public: false
 
     Wexample\SymfonyDataSync\:
-        resource: '../../{Repository,Service}'
+        resource: '../../{Command,Repository,Service}'
         exclude: '../../Service/PropertyLinkStore.php'

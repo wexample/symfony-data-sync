@@ -5,7 +5,7 @@ wexample_symfony_data_sync:
       adapter: test.remote
       local_store: test.locals
       match:
-        - { local: email, remote: email, normalize: [email] }
+        - { local: email, remote: mail, normalize: [email] }
         - { type: fuzzy, fields: [{ local: name, remote: name, weight: 2 }, { local: city, remote: city }] }
       fields:
         username: username
@@ -29,9 +29,11 @@ services:
 
   test.remote:
     class: Wexample\SymfonyDataSync\Testing\InMemoryRemoteAdapter
+    public: true
 
   test.locals:
     class: Wexample\SymfonyDataSync\Testing\InMemoryLocalStore
+    public: true
 
   # Public aliases: redeclaring the services would drop what the extension sets on them.
   test.link_store:
