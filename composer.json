@@ -29,7 +29,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "*",
-    "wexample/symfony-testing": "*"
+    "wexample/symfony-testing": "*",
+    "symfony/event-dispatcher": "*"
   },
   "repositories": [
     {
