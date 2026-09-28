@@ -8,12 +8,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Wexample\SymfonyDataSync\Class\SyncPlan;
-use Wexample\SymfonyDataSync\Class\SyncRelation;
 use Wexample\SymfonyDataSync\Enum\SyncOperation;
-use Wexample\SymfonyDataSync\Service\SyncDefinitionRegistry;
-use Wexample\SymfonyDataSync\Service\SyncExecutor;
-use Wexample\SymfonyDataSync\Service\SyncPlanner;
+use Wexample\SymfonyDataSync\Service\SyncRunner;
 use Wexample\SymfonyDataSync\WexampleSymfonyDataSyncBundle;
 use Wexample\SymfonyHelpers\Command\AbstractBundleCommand;
 use Wexample\SymfonyHelpers\Service\BundleService;
@@ -30,9 +26,7 @@ class RunCommand extends AbstractBundleCommand
 
     public function __construct(
         BundleService $bundleService,
-        private readonly SyncDefinitionRegistry $registry,
-        private readonly SyncPlanner $planner,
-        private readonly SyncExecutor $executor,
+        private readonly SyncRunner $runner,
     ) {
         parent::__construct($bundleService);
     }
@@ -59,24 +53,19 @@ class RunCommand extends AbstractBundleCommand
         InputInterface $input,
         OutputInterface $output
     ): int {
-        $key = $input->getArgument('definition');
-        $definitions = null !== $key ? [$key => $this->registry->get($key)] : $this->registry->all();
-        $localId = $input->getOption('local-id');
-
-        if (null !== $localId) {
-            if (null === $key) {
-                throw new InvalidArgumentException('--local-id needs a definition.');
-            }
-
-            $definition = $definitions[$key];
-            $local = $definition->localStore->find($definition, $localId) ?? throw new InvalidArgumentException(sprintf('No local entity "%s".', $localId));
-            $plan = $this->planner->planOne($definition, $local);
-        } else {
-            $plan = $this->planner->planAll(array_values($definitions));
-        }
-
-        $plan = $this->filter($plan, $input);
-        $report = $this->executor->execute($plan, $definitions, (bool) $input->getOption('dry-run'));
+        $only = $input->getOption('only');
+        $report = $this->runner->run(
+            definitionKey: $input->getArgument('definition'),
+            dryRun: (bool) $input->getOption('dry-run'),
+            localId: $input->getOption('local-id'),
+            remoteId: $input->getOption('remote-id'),
+            only: null === $only ? null : array_map(
+                static fn (string $name): SyncOperation => SyncOperation::tryFrom(trim($name))
+                    ?? throw new InvalidArgumentException(sprintf('Unknown operation "%s". Known: %s.', trim($name), implode(', ', array_column(SyncOperation::cases(), 'value')))),
+                explode(',', $only)
+            ),
+            all: (bool) $input->getOption('all'),
+        );
 
         if (self::FORMAT_JSON === $input->getOption('format')) {
             $output->writeln(json_encode($report->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
@@ -91,29 +80,5 @@ class RunCommand extends AbstractBundleCommand
         }
 
         return $report->hasErrors() ? self::FAILURE : self::SUCCESS;
-    }
-
-    private function filter(SyncPlan $plan, InputInterface $input): SyncPlan
-    {
-        if (! $input->getOption('all')) {
-            $plan = $plan->withoutUpToDate();
-        }
-
-        if (null !== $only = $input->getOption('only')) {
-            $plan = $plan->only(array_map(
-                static fn (string $name): SyncOperation => SyncOperation::tryFrom(trim($name))
-                    ?? throw new InvalidArgumentException(sprintf('Unknown operation "%s". Known: %s.', trim($name), implode(', ', array_column(SyncOperation::cases(), 'value')))),
-                explode(',', $only)
-            ));
-        }
-
-        if (null !== $remoteId = $input->getOption('remote-id')) {
-            $plan = new SyncPlan(array_values(array_filter(
-                $plan->relations,
-                static fn (SyncRelation $relation): bool => $remoteId === ($relation->remote?->id ?? $relation->link?->remoteId)
-            )));
-        }
-
-        return $plan;
     }
 }

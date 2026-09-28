@@ -2,11 +2,10 @@
 
 namespace Wexample\SymfonyDataSync\Command;
 
-use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Wexample\SymfonyDataSync\Service\SyncDefinitionRegistry;
+use Wexample\SymfonyDataSync\Service\SyncLinker;
 use Wexample\SymfonyDataSync\WexampleSymfonyDataSyncBundle;
 use Wexample\SymfonyHelpers\Command\AbstractBundleCommand;
 use Wexample\SymfonyHelpers\Service\BundleService;
@@ -19,7 +18,7 @@ class LinkCommand extends AbstractBundleCommand
 {
     public function __construct(
         BundleService $bundleService,
-        private readonly SyncDefinitionRegistry $registry,
+        private readonly SyncLinker $linker,
     ) {
         parent::__construct($bundleService);
     }
@@ -42,22 +41,10 @@ class LinkCommand extends AbstractBundleCommand
         InputInterface $input,
         OutputInterface $output
     ): int {
-        $definition = $this->registry->get($input->getArgument('definition'));
         $localId = $input->getArgument('localId');
         $remoteId = $input->getArgument('remoteId');
 
-        $definition->localStore->find($definition, $localId) ?? throw new InvalidArgumentException(sprintf('No local entity "%s".', $localId));
-        $definition->adapter->get($remoteId) ?? throw new InvalidArgumentException(sprintf('No remote item "%s".', $remoteId));
-
-        if ($link = $definition->linkStore->findByLocal($definition, $localId)) {
-            throw new InvalidArgumentException(sprintf('"%s" is already linked to "%s": unlink it first.', $localId, $link->remoteId));
-        }
-
-        if ($link = $definition->linkStore->findByRemote($definition, $remoteId)) {
-            throw new InvalidArgumentException(sprintf('"%s" is already linked to "%s": unlink it first.', $remoteId, $link->localId));
-        }
-
-        $definition->linkStore->link($definition, $localId, $remoteId);
+        $this->linker->link($input->getArgument('definition'), $localId, $remoteId);
         $output->writeln(sprintf('Linked %s to %s. The next run compares their fields.', $localId, $remoteId));
 
         return self::SUCCESS;
