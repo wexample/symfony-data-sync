@@ -1,7 +1,7 @@
 # Rebuild symfony-data-sync from network's sync engine
 
 Opened: 2026-09-24
-Updated: 2026-09-27
+Updated: 2026-09-29
 Author: agent:archeology, revised with the owner on 2026-09-27
 
 ## Status
@@ -24,8 +24,16 @@ Divergences from the steps below, decided while building:
   JSON schema were generated from `MOJOE/local/design-system`, whose autoloader lacks the package:
   the console was booted with the namespace added by hand for the run.
 
-Next: `symfony-data-sync-ds` (reads `SyncReport::toArray()`), `symfony-data-sync-demo`, and the
-Rocket.Chat user adapter in `symfony-remote-rocket-chat`.
+Done on 2026-09-28: `symfony-data-sync-ds` (plan, apply, manual link, conflict resolution),
+`symfony-data-sync-demo` (JSON files, one case per decision), the Rocket.Chat user adapter, and
+their wiring in `MOJOE/local/design-system` (bundles, `access_role: ROLE_USER`, menu entry).
+Added while building the demo: `DisablableRemoteAdapterInterface::isDisabled()` (a disable is not
+repeated), creations write every mapped field whatever its direction, and `SyncResolver`.
+
+Left open:
+- the `sync_link` table in MOJOE DS: no migration written, the demo does not need it;
+- a real sync against Rocket.Chat: never run, the adapter is tested with a mocked HTTP client;
+- screens not yet checked in a browser by the agent (the owner looked at them).
 
 Paths are relative to the PHP suite root (`PACKAGES/PHP/packages/wexample/`), except those
 starting with `NETWORK/`, which are relative to `WEXAMPLE/`.
