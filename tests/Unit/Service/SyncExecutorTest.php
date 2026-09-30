@@ -94,7 +94,11 @@ class SyncExecutorTest extends TestCase
         // erase the local value on the next run.
         $this->locals = new InMemoryLocalStore(['u1' => ['username' => 'ada', 'email' => 'ada@example.test', 'name' => 'Ada']]);
         $definition = new SyncDefinition(
-            'users', stdClass::class, $this->remote, $this->locals, $this->links,
+            'users',
+            stdClass::class,
+            $this->remote,
+            $this->locals,
+            $this->links,
             fields: [new FieldMapping('username', 'username'), new FieldMapping('name', 'name', FieldDirection::RemoteToLocal)],
             orphanLocal: OrphanLocalPolicy::CreateRemote,
         );
@@ -131,7 +135,7 @@ class SyncExecutorTest extends TestCase
 
     public function testAFailureIsRecordedAndTheRunGoesOn(): void
     {
-        $remote = new class() extends InMemoryRemoteAdapter {
+        $remote = new class () extends InMemoryRemoteAdapter {
             public function create(array $fields): \Wexample\SymfonyDataSync\Class\RemoteItem
             {
                 if ('ada' === $fields['username']) {

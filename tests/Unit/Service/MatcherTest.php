@@ -80,7 +80,11 @@ class MatcherTest extends TestCase
     public function testAPrefixMatchesGroupsNamedAfterEntities(): void
     {
         $definition = new SyncDefinition(
-            'projects', stdClass::class, new InMemoryRemoteAdapter(), new InMemoryLocalStore(), new InMemoryLinkStore(),
+            'projects',
+            stdClass::class,
+            new InMemoryRemoteAdapter(),
+            new InMemoryLocalStore(),
+            new InMemoryLinkStore(),
             matchRules: [new ExactFieldRule('name', 'name', [MatchNormalizer::Slug], 'projet-')],
         );
 
@@ -96,7 +100,11 @@ class MatcherTest extends TestCase
     private function definition(): SyncDefinition
     {
         return new SyncDefinition(
-            'users', stdClass::class, new InMemoryRemoteAdapter(), new InMemoryLocalStore(), new InMemoryLinkStore(),
+            'users',
+            stdClass::class,
+            new InMemoryRemoteAdapter(),
+            new InMemoryLocalStore(),
+            new InMemoryLinkStore(),
             matchRules: [
                 new ExactFieldRule('email', 'email', [MatchNormalizer::Email]),
                 new ExactFieldRule('username', 'username', [MatchNormalizer::Lower]),

@@ -3,7 +3,6 @@
 namespace Wexample\SymfonyDataSync\Class;
 
 use DateTimeInterface;
-use Wexample\SymfonyDataSync\Enum\SyncOperation;
 use Wexample\SymfonyDataSync\Enum\SyncOutcome;
 
 /**

@@ -86,10 +86,12 @@ class SyncExecutor
         switch ($relation->operation) {
             case SyncOperation::LocalLink:
                 $definition->linkStore->link($definition, $local->id, $relation->remote->id);
+
                 break;
 
             case SyncOperation::LocalUnlink:
                 $definition->linkStore->unlink($definition, $relation->link->localId, $relation->link->remoteId);
+
                 break;
 
             case SyncOperation::RemoteCreate:
@@ -126,6 +128,7 @@ class SyncExecutor
 
                 // Both sides now hold these values: the next run compares against them.
                 $definition->linkStore->touch($definition, $local->id, $relation->remote->id, SyncValueHelper::hash($definition->fields, $local->fields, false));
+
                 break;
 
             case SyncOperation::RemoteRemove:
@@ -134,6 +137,7 @@ class SyncExecutor
                 if ($relation->link) {
                     $definition->linkStore->unlink($definition, $relation->link->localId, $relation->link->remoteId);
                 }
+
                 break;
 
             case SyncOperation::RemoteDisable:
@@ -142,6 +146,7 @@ class SyncExecutor
                 }
 
                 $definition->adapter->disable($relation->remote->id);
+
                 break;
 
             default:

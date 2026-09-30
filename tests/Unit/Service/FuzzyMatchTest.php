@@ -69,7 +69,11 @@ class FuzzyMatchTest extends TestCase
     private function match(string $localName, array $remoteNames): \Wexample\SymfonyDataSync\Class\MatchResult
     {
         $definition = new SyncDefinition(
-            'orgs', stdClass::class, new InMemoryRemoteAdapter(), new InMemoryLocalStore(), new InMemoryLinkStore(),
+            'orgs',
+            stdClass::class,
+            new InMemoryRemoteAdapter(),
+            new InMemoryLocalStore(),
+            new InMemoryLinkStore(),
             matchRules: [new FuzzyFieldRule([['local' => 'name', 'remote' => 'name', 'weight' => 1.0]])],
             thresholds: new Thresholds(0.95, 0.7),
         );
