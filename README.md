@@ -1,6 +1,6 @@
 # symfony_data_sync
 
-Version: 3.0.0
+Version: 3.0.1
 
 ## A definition
 
@@ -138,7 +138,7 @@ Visit the [Wexample Suite documentation](https://docs.wexample.com) for the comp
 ## Dependencies
 
 - php: >=8.5
-- wexample/symfony-helpers: >=12.0.0
+- wexample/symfony-helpers: >=13.0.0
 - doctrine/orm: ^3.0
 - symfony/property-access: *
 - symfony/string: *
