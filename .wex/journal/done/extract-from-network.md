@@ -1,7 +1,8 @@
 # Rebuild symfony-data-sync from network's sync engine
 
 Opened: 2026-09-24
-Updated: 2026-09-29
+Closed: 2026-10-09
+Updated: 2026-10-09
 Author: agent:archeology, revised with the owner on 2026-09-27
 
 ## Status
@@ -209,3 +210,7 @@ belongs in `symfony-data-sync`.
   dry-run produces no writes.
 - `data-sync:run --dry-run --format=json` output is stable (snapshot).
 - The fuzzy rule is covered with its thresholds.
+
+## Clos le 2026-10-09 (revue de l'extraction, agent:main)
+
+Fait (étapes 1 à 14, -ds, -demo, adaptateur Rocket.Chat). Le « Left open » ci-dessus reste vrai : migration `sync_link` à jour dans MOJOE design system (créée depuis, avec la signature), aucune synchronisation réelle contre Rocket.Chat — suivi dans `NETWORK/local/network/.wex/knowledge/readme/archeology/status.md.j2`.
