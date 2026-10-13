@@ -1,6 +1,6 @@
 # symfony_data_sync
 
-Version: 3.0.5
+Version: 3.0.6
 
 ## A definition
 
