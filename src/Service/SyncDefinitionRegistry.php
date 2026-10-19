@@ -20,6 +20,7 @@ use Wexample\SymfonyDataSync\Enum\OrphanRemotePolicy;
 use Wexample\SymfonyDataSync\Enum\PredicateOperator;
 use Wexample\SymfonyDataSync\Interface\LocalStoreInterface;
 use Wexample\SymfonyDataSync\Interface\RemoteAdapterInterface;
+use Wexample\SymfonyHelpers\Attribute\WorkerSafe;
 
 /**
  * The definitions declared under wexample_symfony_data_sync.definitions,
@@ -30,6 +31,7 @@ class SyncDefinitionRegistry
     /**
      * @var array<string, SyncDefinition>
      */
+    #[WorkerSafe('Definitions built from the configuration, the same for every request.')]
     private array $built = [];
 
     /**

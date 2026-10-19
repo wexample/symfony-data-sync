@@ -15,7 +15,7 @@ use Wexample\SymfonyDataSync\Interface\LocalStoreInterface;
  */
 class DoctrineLocalStore implements LocalStoreInterface
 {
-    private PropertyAccessorInterface $accessor;
+    private readonly PropertyAccessorInterface $accessor;
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
