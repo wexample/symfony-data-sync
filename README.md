@@ -1,6 +1,6 @@
 # symfony_data_sync
 
-Version: 3.1.0
+Version: 3.1.1
 
 ## A definition
 
@@ -136,7 +136,7 @@ The suite includes packages for configuration management, file handling, prompts
 ## Dependencies
 
 - php: >=8.5
-- wexample/symfony-helpers: >=17.0.0
+- wexample/symfony-helpers: >=18.0.0
 - doctrine/orm: ^3.0
 - symfony/property-access: *
 - symfony/string: *
