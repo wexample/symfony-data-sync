@@ -3,7 +3,7 @@
   "description": "Reconciles local Doctrine entities with external data sources: definitions, adapters, links, matching, plans and dry runs",
   "type": "library",
   "license": "MIT",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "autoload": {
     "psr-4": {
       "Wexample\\SymfonyDataSync\\": "src/"
@@ -22,11 +22,11 @@
   ],
   "require": {
     "php": ">=8.5",
-    "wexample/symfony-helpers": ">=18.0.0",
+    "wexample/symfony-helpers": ">=18.0.2",
     "doctrine/orm": "^3.0",
     "symfony/property-access": "*",
     "symfony/string": "*",
-    "wexample/php-pseudocode": ">=2.2.2"
+    "wexample/php-pseudocode": ">=2.2.4"
   },
   "require-dev": {
     "phpunit/phpunit": "^13",
