@@ -56,3 +56,4 @@ coverage*.lcov
 /out/
 /coverage/
 /tests/Fixtures/App/config/reference.php
+/node_modules
