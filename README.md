@@ -1,6 +1,6 @@
 # symfony_data_sync
 
-Version: 3.1.3
+Version: 3.1.4
 
 Reconciles local Doctrine entities with external data sources: definitions, adapters, links, matching, plans and dry runs
 
